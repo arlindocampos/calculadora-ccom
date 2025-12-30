@@ -517,6 +517,11 @@
             Limpar Tudo
         </button>
     </div>
+
+  <button onclick="exportarBancoCompleto()" style="width: 100%; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 5px; font-size: 12px;">
+    📥 Baixar Backup de Todos os Alunos
+</button>
+
 </div>
 
 </div>
@@ -967,63 +972,74 @@ function exportarPlanilha() {
 
 // Função chamada toda vez que o aluno clica em "Salvar"
 // SALVAR NO FIREBASE
+// 1. FUNÇÃO PARA SALVAR (Substitua a existente)
 function salvarDados() {
-    const nomeAluno = document.getElementById('selecao_aluno').value.trim();
-    if (!nomeAluno) { alert("Selecione um aluno!"); return; }
+    const selector = document.getElementById('selecao_aluno');
+    const idAluno = selector.value; // Pega o value (ex: aluno_1)
+    const nomeAluno = selector.options[selector.selectedIndex].text; // Pega o nome (ex: ROGER)
+
+    if (!idAluno || idAluno === "") { 
+        alert("⚠️ Selecione um aluno na lista antes de salvar!"); 
+        return; 
+    }
 
     const dados = {};
-    document.querySelectorAll('input:not(#selecao_aluno)').forEach(input => {
-        dados[input.id] = input.value;
+    // Pega todos os inputs de notas
+    document.querySelectorAll('input').forEach(input => {
+        if (input.id) dados[input.id] = input.value;
     });
 
-    // Salva no caminho: alunos/NOME_DO_ALUNO
-    database.ref('alunos/' + nomeAluno).set(dados)
-        .then(() => alert("✅ Notas sincronizadas para toda a turma!"))
-        .catch(err => console.error(err));
+    // Salva no Firebase usando o ID fixo (aluno_1, aluno_2...)
+    database.ref('alunos/' + idAluno).set(dados)
+        .then(() => alert("✅ Notas de " + nomeAluno + " sincronizadas na nuvem!"))
+        .catch(err => alert("Erro ao salvar: " + err));
 }
 
-// CARREGAR DO FIREBASE (Sincronização automática)
+// 2. FUNÇÃO PARA CARREGAR (Substitua as DUAS que existem por esta ÚNICA)
 function trocarAluno() {
-    const nomeAluno = document.getElementById('selecao_aluno').value.trim();
-    
-    // Escuta mudanças em tempo real para o aluno selecionado
-    database.ref('alunos/' + nomeAluno).once('value', (snapshot) => {
+    const idAluno = document.getElementById('selecao_aluno').value;
+
+    if (!idAluno || idAluno === "") {
+        limparTudo();
+        return;
+    }
+
+    // Busca no Firebase os dados do aluno selecionado
+    database.ref('alunos/' + idAluno).once('value', (snapshot) => {
         const dados = snapshot.val();
         
-        // Limpa campos antes de preencher
-        document.querySelectorAll('input:not(#selecao_aluno)').forEach(input => input.value = "");
+        // Primeiro limpamos os campos para não misturar notas de alunos diferentes
+        document.querySelectorAll('input').forEach(input => input.value = "");
 
         if (dados) {
-            Object.keys(dados).forEach(id => {
-                const campo = document.getElementById(id);
-                if (campo) campo.value = dados[id];
+            // Preenche os campos com o que está no banco
+            Object.keys(dados).forEach(idCampo => {
+                const campo = document.getElementById(idCampo);
+                if (campo) campo.value = dados[idCampo];
             });
+            // Recalcula as médias com os dados novos
+            calcular();
+        } else {
+            // Se o aluno não tiver dados salvos, apenas reseta os cálculos
             calcular();
         }
     });
 }
 
-// Função chamada quando o usuário troca o nome na lista suspensa
-function trocarAluno() {
-    const idAluno = document.getElementById('selecao_aluno').value;
-    const bancoTotal = JSON.parse(localStorage.getItem('banco_alunos') || "{}");
+// 3. FUNÇÃO DE BACKUP GERAL (Para você baixar tudo)
+function exportarBancoCompleto() {
+    database.ref('alunos').once('value', (snapshot) => {
+        const todosOsDados = snapshot.val();
+        if (!todosOsDados) { alert("Banco vazio!"); return; }
 
-    // Primeiro, limpamos todos os campos da tela (pode usar sua função limparTudo sem o alert)
-    document.querySelectorAll('input').forEach(input => input.value = "");
-
-    // Se existirem dados para o aluno selecionado, preenchemos
-    if (bancoTotal[idAluno]) {
-        const dadosAluno = bancoTotal[idAluno];
-        Object.keys(dadosAluno).forEach(idCampo => {
-            const campo = document.getElementById(idCampo);
-            if (campo) campo.value = dadosAluno[idCampo];
-        });
-        // Recalcula as médias automaticamente
-        calcular();
-    } else {
-        // Se não tiver dados salvos, apenas limpa os resultados
-        calcular(); 
-    }
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(todosOsDados, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "backup_geral_ccom.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    });
 }
 
 function calcular() {
