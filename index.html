@@ -29,7 +29,7 @@
     .taf-row {
       display: flex;
       justify-content: center;
-      gap: 10px;
+      gap: 15px;
       margin-bottom: 15px;
       align-items: flex-start;
     }
@@ -62,6 +62,11 @@
       text-transform: uppercase;
       background: #161515;
       padding: 10px;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     .container {
       background: rgb(39, 39, 39);
@@ -71,6 +76,8 @@
       margin: auto;
       box-shadow: 0 0px 1000px rgba(0, 149, 255, 0.451);
       position: relative;
+      width: 95%;
+      margin: 0 auto
     }
     h3 {
       text-align: center;
@@ -123,7 +130,7 @@
     }
     .final {
       margin: 40px auto;        /* centraliza o box */
-      font-size: 72px;
+      font-size: 50px;
       text-align: center;
       font-weight: bold;
       font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
@@ -205,10 +212,37 @@
     </div>
 
 <div id="area_calculadora" style="display: none;">
-  
+ <h1 style="text-align: center; color: white; margin-bottom: 10px; font-size: 24px;">
+        Calculadora de Notas
+    </h1>
 
-    
-    <h2>Calculadora de Médias</h2>
+    <div id="box_aluno" style="
+        background: #1e1e1e; 
+        border: 2px solid #4dabf7; 
+        border-radius: 12px; 
+        padding: 15px; 
+        margin: 0 auto 30px auto; 
+        max-width: 400px; 
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(77, 171, 247, 0.3);
+    ">
+        <span style="color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Aluno Logado</span>
+        <h2 id="titulo_boletim" style="color: white; margin: 5px 0; font-size: 20px;">---</h2>
+        
+        <button onclick="window.location.reload()" style="
+            background: transparent; 
+            color: #ff5252; 
+            border: 1px solid #ff5252; 
+            padding: 5px 10px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 11px; 
+            margin-top: 10px;
+            transition: 0.3s;
+        " onmouseover="this.style.background='#ff5252'; this.style.color='white'" onmouseout="this.style.background='transparent'; this.style.color='#ff5252'">
+            Sair / Trocar Aluno
+        </button>
+    </div>
 
 <div class="aluno-info" style="margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; width: 100%;">
 
@@ -545,8 +579,8 @@
         </button>
     </div>
 
-  <button onclick="exportarBancoCompleto()" style="width: 100%; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 5px; font-size: 12px;">
-    📥 Baixar Backup de Todos os Alunos
+<button id="btn_backup" onclick="exportarBancoCompleto()" style="display: none; width: 100%; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 5px; font-size: 12px;">
+    📥 Baixar Backup de Todos os Alunos (Admin)
 </button>
 
 </div>
@@ -1026,24 +1060,38 @@ function fazerLogin() {
 }
 
 function liberarAcesso(dados) {
+    const nomeLogado = document.getElementById('selecao_aluno').value.trim().toUpperCase();
+
+    // 1. Alterna as telas
     document.getElementById('area_login').style.display = 'none';
     document.getElementById('area_calculadora').style.display = 'block';
     
-    // Trava o nome no cabeçalho para o aluno saber que é ele
-    const titulo = document.querySelector('h2');
-    titulo.innerText = "Boletim: " + document.getElementById('selecao_aluno').value.toUpperCase();
+    // 2. Coloca o nome do aluno dentro do Box
+    const elementoNome = document.getElementById('titulo_boletim');
+    if (elementoNome) {
+        elementoNome.innerText = nomeLogado;
+    }
 
+    // 3. Centralização: Como a calculadora é grande, 
+    // alinhamos o body ao topo para permitir rolagem
+    document.body.style.alignItems = "flex-start";
+    document.body.style.paddingTop = "30px";
+
+    // 4. Verificação de Admin (CAMPOS) para mostrar o backup
+    const btnBackup = document.getElementById('btn_backup');
+    if (btnBackup) {
+        btnBackup.style.display = (nomeLogado === "CAMPOS") ? "block" : "none";
+    }
+
+    // 5. Preenchimento automático das notas vindas do Firebase
     if (dados) {
-        // Preenche todos os inputs com os dados do Firebase
         Object.keys(dados).forEach(id => {
             const campo = document.getElementById(id);
-            // Preenche tudo exceto o campo de senha do login
-            if (campo && id !== 'senha_aluno') {
+            if (campo && id !== 'senha_aluno' && id !== 'selecao_aluno') {
                 campo.value = dados[id];
             }
         });
-        // Atualiza os cálculos de média na tela
-        if (typeof calcular === "function") calcular();
+        if (typeof calcular === 'function') calcular();
     }
 }
 
