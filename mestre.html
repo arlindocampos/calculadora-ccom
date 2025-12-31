@@ -64,11 +64,19 @@
 
         // Função para carregar a prévia na tela (apenas médias)
         function carregarDados() {
-            database.ref('alunos').once('value', (snapshot) => {
+            database.ref('alunos').on('value', (snapshot) => {
                 const data = snapshot.val();
                 const corpo = document.getElementById('corpo');
                 corpo.innerHTML = "";
                 if (!data) return;
+
+                const limparValor = (val) => {
+                            if (!val) return '--';
+                            if (typeof val === 'string' && val.includes(': ')) {
+                                return val.split(': ')[1]; // Retorna apenas a parte após os dois pontos
+                            }
+                            return val;
+                        };
 
                 Object.keys(data).sort().forEach(nome => {
                     if (nome === "MESTRE") return;
