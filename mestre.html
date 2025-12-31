@@ -63,33 +63,35 @@
         const database = firebase.database();
 
         // Função para carregar a prévia na tela (apenas médias)
-        function carregarDados() {
+function carregarDados() {
             database.ref('alunos').on('value', (snapshot) => {
                 const data = snapshot.val();
                 const corpo = document.getElementById('corpo');
                 corpo.innerHTML = "";
                 if (!data) return;
 
+                // Função para limpar o texto e deixar apenas o número
                 const limparValor = (val) => {
-                            if (!val) return '--';
-                            if (typeof val === 'string' && val.includes(': ')) {
-                                return val.split(': ')[1]; // Retorna apenas a parte após os dois pontos
-                            }
-                            return val;
-                        };
+                    if (!val) return '--';
+                    if (typeof val === 'string' && val.includes(': ')) {
+                        return val.split(': ')[1]; // Retorna apenas a parte após os dois pontos
+                    }
+                    return val;
+                };
 
                 Object.keys(data).sort().forEach(nome => {
                     if (nome === "MESTRE") return;
                     const d = data[nome];
+                    
                     corpo.innerHTML += `
                         <tr>
                             <td style="text-align:left">${nome}</td>
-                            <td>${d.res_m1 ? d.res_m1.split(': ')[1] : '--'}</td>
-                            <td>${d.res_m2 ? d.res_m2.split(': ')[1] : '--'}</td>
-                            <td>${d.res_m3 ? d.res_m3.split(': ')[1] : '--'}</td>
-                            <td>${d.res_m4 ? d.res_m4.split(': ')[1] : '--'}</td>
-                            <td>${d.res_m5 ? d.res_m5.split(': ')[1] : '--'}</td>
-                            <td style="color:#ffd700">${d.media_final || '--'}</td>
+                            <td>${limparValor(d.res_m1)}</td>
+                            <td>${limparValor(d.res_m2)}</td>
+                            <td>${limparValor(d.res_m3)}</td>
+                            <td>${limparValor(d.res_m4)}</td>
+                            <td>${limparValor(d.res_m5)}</td>
+                            <td style="color:#ffd700; font-weight:bold;">${limparValor(d.media_final)}</td>
                         </tr>`;
                 });
             });
