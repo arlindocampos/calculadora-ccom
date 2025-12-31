@@ -183,6 +183,82 @@
       font-weight: lighter;
       color: #fff;
     }
+    <style>
+    .container-botoes {
+        display: flex; 
+        flex-direction: column; 
+        gap: 10px; 
+        margin-top: 20px;
+    }
+
+    .linha-dupla {
+        display: flex; 
+        gap: 10px;
+    }
+
+    /* Estilo Base para todos os botões */
+    .btn-acao {
+        width: 100%;
+        padding: 12px;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease; /* Faz o efeito ser suave */
+        border: 2px solid transparent;
+    }
+
+    /* Botão Salvar */
+    .btn-salvar {
+        background: #007bff;
+        color: white;
+        font-size: 16px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    .btn-salvar:hover {
+        background: transparent;
+        color: #007bff;
+        border-color: #007bff;
+    }
+
+    /* Botão Exportar */
+    .btn-exportar {
+        background: #28a745;
+        color: white;
+        flex: 1;
+    }
+    .btn-exportar:hover {
+        background: transparent;
+        color: #28a745;
+        border-color: #28a745;
+    }
+
+    /* Botão Limpar */
+    .btn-limpar {
+        background: #ff4d4d;
+        color: white;
+        flex: 1;
+    }
+    .btn-limpar:hover {
+        background: transparent;
+        color: #ff4d4d;
+        border-color: #ff4d4d;
+    }
+
+    /* Botão Sair (Mais discreto) */
+    .btn-sair {
+        background: transparent;
+        color: #ff5252;
+        border: 1px solid #ff5252;
+        font-size: 11px;
+        margin-top: 10px;
+    }
+    .btn-sair:hover {
+        background: #ff5252;
+        color: white;
+    }
+</style>
   </style>
 </head>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -565,21 +641,26 @@
   <div class="final" id="media_final">MÉDIA FINAL: 8.822</div>
   
 
-<div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+<div class="container-botoes">
     
-    <button onclick="salvarDados()" style="width: 100%; padding: 15px; background: #007bff; color: white; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+    <button onclick="salvarDados()" class="btn-acao btn-salvar">
         💾 SALVAR PROGRESSO DO ALUNO
     </button>
 
-    <div style="display: flex; gap: 10px;">
-        <button onclick="exportarPlanilha()" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer;">
+    <div class="linha-dupla">
+        <button onclick="exportarPlanilha()" class="btn-acao btn-exportar">
             Exportar CSV
         </button>
-        <button onclick="limparTudo()" style="flex: 1; padding: 12px; background: #ff4d4d; color: white; border: none; border-radius: 8px; cursor: pointer;">
+        <button onclick="limparTudo()" class="btn-acao btn-limpar">
             Limpar Tudo
         </button>
     </div>
 
+    <button onclick="window.location.reload()" class="btn-acao btn-sair">
+        Sair / Trocar Aluno
+    </button>
+
+</div>
 </div>
 
 </div>
