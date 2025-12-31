@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel Mestre - Exportação Completa</title>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
+        .controles { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; }
+        button { padding: 12px 20px; cursor: pointer; border-radius: 8px; border: none; font-weight: bold; transition: 0.3s; }
+        .btn-voltar { background: #333; color: white; }
+        .btn-exportar { background: #28a745; color: white; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3); }
+        .btn-exportar:hover { background: #218838; transform: scale(1.05); }
+        .tabela-container { overflow-x: auto; background: #1a1a1a; padding: 15px; border-radius: 10px; border: 1px solid #333; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+        th { background: #ffd700; color: black; }
+    </style>
+</head>
+<body>
+
+    <h1>📊 Gestão de Dados - MESTRE</h1>
+
+    <div class="controles">
+        <button class="btn-voltar" onclick="window.location.href='index.html'">← Voltar</button>
+        <button class="btn-exportar" onclick="exportarExcelCompleto()">📥 Exportar Planilha Completa (.xlsx)</button>
+    </div>
+
+    <div class="tabela-container">
+        <table id="tabelaResumo">
+            <thead>
+                <tr>
+                    <th>ALUNO</th>
+                    <th>TEC MIL</th>
+                    <th>FUND COM</th>
+                    <th>CIBER</th>
+                    <th>TAF</th>
+                    <th>PORTUGUÊS</th>
+                    <th>MÉDIA FINAL</th>
+                </tr>
+            </thead>
+            <tbody id="corpo"></tbody>
+        </table>
+        <button onclick="inicializarListaAlunos()" style="align-items: center; text-align: center; align-self: center; margin-top:50px ; background: #666; color: white;">⚡ Popular Lista Inicial</button>
+    </div>
+
+    <script>
+        // Use seu firebaseConfig aqui
+  const firebaseConfig = {
+    apiKey: "AIzaSyDzZcTATUuebrZ-0wH3GX-MFfWMNMUGbwY",
+    authDomain: "calculadora-alunos-ccom.firebaseapp.com",
+    databaseURL: "https://calculadora-alunos-ccom-default-rtdb.firebaseio.com",
+    projectId: "calculadora-alunos-ccom",
+    storageBucket: "calculadora-alunos-ccom.firebasestorage.app",
+    messagingSenderId: "529377303750",
+    appId: "1:529377303750:web:a0e87c344a7c0535690bc7",
+    measurementId: "G-GXELJKZLKQ"
+  };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Função para carregar a prévia na tela (apenas médias)
+        function carregarDados() {
+            database.ref('alunos').once('value', (snapshot) => {
+                const data = snapshot.val();
+                const corpo = document.getElementById('corpo');
+                corpo.innerHTML = "";
+                if (!data) return;
+
+                Object.keys(data).sort().forEach(nome => {
+                    if (nome === "MESTRE") return;
+                    const d = data[nome];
+                    corpo.innerHTML += `
+                        <tr>
+                            <td style="text-align:left">${nome}</td>
+                            <td>${d.res_m1 ? d.res_m1.split(': ')[1] : '--'}</td>
+                            <td>${d.res_m2 ? d.res_m2.split(': ')[1] : '--'}</td>
+                            <td>${d.res_m3 ? d.res_m3.split(': ')[1] : '--'}</td>
+                            <td>${d.res_m4 ? d.res_m4.split(': ')[1] : '--'}</td>
+                            <td>${d.res_m5 ? d.res_m5.split(': ')[1] : '--'}</td>
+                            <td style="color:#ffd700">${d.media_final || '--'}</td>
+                        </tr>`;
+                });
+            });
+        }
+
+function exportarExcelCompleto() {
+    database.ref('alunos').once('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return alert("Sem dados para exportar!");
+
+        const listaParaExcel = [];
+
+        Object.keys(data).sort().forEach(nome => {
+            if (nome === "MESTRE") return;
+            const d = data[nome];
+            
+            // Função para calcular nota de teóricas (Retorna NÚMERO puro)
+            const c = (f, t) => (f && t && t > 0) ? parseFloat((parseFloat(f) / parseFloat(t) * 10).toFixed(3)) : null;
+            
+            // Função para limpar o texto das médias (Retorna NÚMERO puro)
+            const n = (val) => {
+                if (val && typeof val === 'string') {
+                    let limpo = val.includes(': ') ? val.split(': ')[1] : val;
+                    let num = parseFloat(limpo);
+                    return isNaN(num) ? null : num;
+                }
+                return (typeof val === 'number') ? val : null;
+            };
+
+const registro = {
+                "NOME DO ALUNO": nome,
+                
+                // --- MÉDIAS POR DISCIPLINA (ADICIONADAS AGORA) ---
+
+
+
+
+
+                // --- DETALHAMENTO DAS PROVAS ---
+                "NOTA AA TÉC. MIL.": c(d.m1_aa_f, d.m1_aa_t),
+                "NOTA AC TÉC. MIL.": c(d.m1_ac_f, d.m1_ac_t),
+                "MÉDIA TÉC. MIL.": n(d.res_m1),
+                "NOTA AA FUND. COM.": c(d.m2_aa_f, d.m2_aa_t),
+                "NOTA AC FUND. COM.": c(d.m2_ac_f, d.m2_ac_t),
+                "MÉDIA FUND. COM.": n(d.res_m2),
+                "NOTA AA1 CIBERNÉTICA": c(d.m3_aa1_f, d.m3_aa1_t),
+                "NOTA AA2 CIBERNÉTICA": c(d.m3_aa2_f, d.m3_aa2_t),
+                "NOTA AC CIBERNÉTICA": c(d.m3_ac_f, d.m3_ac_t),
+                "MÉDIA CIBERNÉTICA": n(d.res_m3),
+                "NOTA AA1 PORTUGUÊS": c(d.m5_aa1_f, d.m5_aa1_t),
+                "NOTA AA2 PORTUGUÊS": c(d.m5_aa2_f, d.m5_aa2_t),
+                "NOTA AC PORTUGUÊS": c(d.m5_ac_f, d.m5_ac_t),
+                "MÉDIA PORTUGUÊS": n(d.res_m5),
+
+                // Detalhamento TAF
+                "NOTA AA BARRA": n(d.prev_m4_barra_aa),
+                "NOTA AC BARRA": n(d.prev_m4_barra_ac),
+                "NOTA AA CORDA": n(d.prev_m4_corda_aa),
+                "NOTA AC CORDA": n(d.prev_m4_corda_ac),
+                "NOTA AA CORRIDA": n(d.prev_m4_corrida_aa),
+                "NOTA AC CORRIDA": n(d.prev_m4_corrida_ac),
+                "NOTA AA FLEXÃO": n(d.prev_m4_flexao_aa),
+                "NOTA AC FLEXÃO": n(d.prev_m4_flexao_ac),
+                "NOTA AA NATAÇÃO": n(d.prev_m4_natacao_aa),
+                "NOTA AC NATAÇÃO": n(d.prev_m4_natacao_ac),
+                "NOTA AA PPM": n(d.prev_m4_ppm_aa),
+                "NOTA AC PPM": n(d.prev_m4_ppm_ac),
+                "MÉDIA TAF": n(d.res_m4),
+
+                // --- MÉDIA GERAL ---
+                "MÉDIA FINAL": n(d.media_final)
+            };
+
+            listaParaExcel.push(registro);
+        });
+
+        // 1. Cria a planilha a partir dos dados JSON
+        const ws = XLSX.utils.json_to_sheet(listaParaExcel);
+
+        // 2. ENCAIXE AQUI: Lógica para formatar as células como NÚMERO e aplicar VÍRGULA
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let R = range.s.r + 1; R <= range.e.r; ++R) { // Começa na linha 1 para pular o cabeçalho
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cell_address = { c: C, r: R };
+                const cell_ref = XLSX.utils.encode_cell(cell_address);
+                
+                if (!ws[cell_ref]) continue;
+
+                // Se o valor for um número, aplicamos a máscara de formatação
+                if (typeof ws[cell_ref].v === 'number') {
+                    ws[cell_ref].t = 'n'; // Define o tipo como Number (Número)
+                    ws[cell_ref].z = '#,##0.000'; // Define o formato decimal (o Excel usará vírgula se o Windows estiver em PT-BR)
+                }
+            }
+        }
+
+        // 3. Finaliza a criação do arquivo
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Notas Oficiais");
+        XLSX.writeFile(wb, "Planilha_Notas_TAF_e_Teoricas.xlsx");
+    });
+}
+
+function inicializarListaAlunos() {
+    const listaNomes = [
+        "ROGER", "D SILVA", "GABRIEL PIMENTEL", "REBELO", "DAVI COSTA", "GOES", 
+        "FRANCO", "CONTILE", "LOBO", "GUILHERME SOUZA", "ALMEIDA", "DOS REIS", 
+        "MATEUS RIBEIRO", "SAMUEL VICTOR", "YURY LINS", "J VICTOR", "LUCAS RYAN", 
+        "ROSANOVA", "CORDEIRO SILVA", "TEODORO", "DAVI CARLOS", "L MARTINS", 
+        "CAIO NASCIMENTO", "MATHEUS SILVA", "CESAR", "CESTARO", "PERROTTE", 
+        "WAGNER PEREIRA", "CLEMENTE", "WALLACE OLIVEIRA", "ESTEVAO", "PEDRO CARVALHO", 
+        "R SILVA", "GUILHERME FERREIRA", "QUEIROZ", "LEMOS", "LIESSI", "REIS SOUSA", 
+        "SOUZA MOTA", "ALCANTARA", "ADRIEL VALENÇA", "THALES", "VICTOR PEREIRA", 
+        "VALE", "LUIZ SANTOS", "BERTUCE", "KAUA SOUZA", "CLAUDIO", "DE ALBUQUERQUE", 
+        "GABRIEL SILVA", "MENDONCA", "AMORIM", "P MOURA", "EDUARDO", "TAUAN", 
+        "V MAGALHAES", "CONCEICAO", "CYRILLO", "LUCAS ABREU", "BARCELLOS", "MAURO", 
+        "LISBOA", "GUEDES", "PRADO", "THIAGO WESLLEY", "STELLE", "MEIRELES", 
+        "MONTANHA", "VITOR", "MATHEUS BARBOSA", "ANTONIO SILVA", "ASSUNCAO", 
+        "GABRIEL AMORA", "VERRI", "DE ANGELO", "JOAO CESARIO", "LUCAS ALVES", 
+        "L SILVEIRA", "FAGUNDES", "COSTA", "AURINO", "R MOURA", "JULIACI", 
+        "LUAN SILVA", "JOAO SANTOS", "ARTHUR", "ISIDORO", "ENZO FERRARI", 
+        "CARLOS EDUARDO", "FEITOSA", "CAPUTO", "DE CASTRO", "LUCAS CRUZ", 
+        "DIOGO VINICIUS", "VICTOR SANTOS", "E FAGNER", "SILVA GOMES", "PIRES SOUZA", 
+        "C ALCANTARA", "JULIAO", "CAMPOS", "MAURILIO", "JOAO RODRIGUES", "LATTO", 
+        "BASTOS", "TEOFILO", "MARCENES", "FRANK", "FARIAS", "JEZIEL", "J RIBEIRO", 
+        "EDUARDO NASCIMENTO", "F DANTAS", "NASCIMENTO ANTUNES", "SIMOES", "TRANCOZO", 
+        "RITZMANN", "CASTRO ALVES", "CHRISTIAN", "S GABRIEL", "DEIVISSON", "THOMAS", 
+        "CAMILO", "TAVARES NETO", "SERPA", "GIMENEZ", "ZAKUR", "CARVALHO SOUZA", 
+        "DE ARAUJO", "DOMINGUES"
+    ];
+
+    if (!confirm("Isso irá resetar/preparar a lista de alunos sem apagar as senhas já criadas. Continuar?")) return;
+
+    const updates = {};
+    listaNomes.forEach(nome => {
+        const nomeLimpo = nome.trim().toUpperCase().replace(/\./g, '');
+        
+        // Verificamos se o aluno já existe para NÃO sobrescrever a senha dele
+        database.ref('alunos/' + nomeLimpo).once('value').then(snapshot => {
+            if (!snapshot.exists()) {
+                // Se o aluno NÃO existe, criamos apenas as médias (SEM o campo senha)
+                database.ref('alunos/' + nomeLimpo).set({
+                    media_final: "0.000",
+                    res_m1: "MÉDIA: 0.000",
+                    res_m2: "MÉDIA: 0.000",
+                    res_m3: "MÉDIA: 0.000",
+                    res_m4: "MÉDIA: 0.000",
+                    res_m5: "MÉDIA: 0.000"
+                });
+            } else {
+                // Se o aluno JÁ existe, atualizamos apenas as médias para 0 caso estejam vazias
+                // mas preservamos a senha e outros dados que ele já salvou
+                database.ref('alunos/' + nomeLimpo).update({
+                    media_final: snapshot.val().media_final || "0.000",
+                    res_m1: snapshot.val().res_m1 || "MÉDIA: 0.000",
+                    res_m2: snapshot.val().res_m2 || "MÉDIA: 0.000",
+                    res_m3: snapshot.val().res_m3 || "MÉDIA: 0.000",
+                    res_m4: snapshot.val().res_m4 || "MÉDIA: 0.000",
+                    res_m5: snapshot.val().res_m5 || "MÉDIA: 0.000"
+                });
+            }
+        });
+    });
+
+    alert("✅ Processo iniciado! Como é uma lista grande, aguarde 5 segundos e recarregue a página.");
+}
+        window.onload = carregarDados;
+    </script>
+</body>
+</html>
